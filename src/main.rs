@@ -1,12 +1,14 @@
 mod cache;
 mod config;
 mod db;
+mod handlers;
 mod helpers;
 mod models;
+mod routes;
 mod services;
 mod states;
 
-use axum::{Router, routing::get};
+use axum::Router;
 use dotenvy::dotenv;
 use tokio::net::TcpListener;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
@@ -33,9 +35,7 @@ async fn main() {
 
     tracing::info!("Database connected");
 
-    let router: Router = Router::new()
-        .route("/", get(|| async { "Hello world" }))
-        .with_state(db);
+    let router: Router = routes::create_routes().with_state(db);
 
     let addr: String = format!("{}:{}", HOST, PORT);
 
