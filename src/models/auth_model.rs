@@ -22,5 +22,5 @@ pub struct LoginPayload {
 #[derive(Serialize)]
 pub struct AuthResponse {
     pub access_token: String,
-    pub token_type: String,
+    pub token_type: &'static str, // Bearer
 }
