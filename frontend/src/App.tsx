@@ -1,10 +1,13 @@
 import { Outlet } from "react-router-dom"
+import { DashboardLayout } from "./components/layout/DashboardLayout"
+import "./index.css"
 
 function App() {
   return (
     <>
-      <h1>Hola mundo</h1>
-      <Outlet />
+      <DashboardLayout>
+        <Outlet />
+      </DashboardLayout>
     </>
   )
 }

@@ -3,9 +3,9 @@ import App from "@/App"
 import Index from "@/pages/Index"
 import TaskManagement from "@/pages/TaskManagement"
 import UpcomingTasks from "@/pages/UpcomingTasks"
-import UserProfile from "@/pages/UserProfile"
 import CompletedTasks from "@/pages/CompletedTasks"
 import Projects from "@/pages/Projects"
+import UserProfile from "@/pages/UserProfile"
 
 export const AppRoutes = () => {
   return (
