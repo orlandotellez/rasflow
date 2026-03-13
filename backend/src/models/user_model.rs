@@ -12,6 +12,7 @@ pub struct User {
     pub created_at: DateTime<Utc>,
 }
 
+#[derive(Debug, Serialize, Deserialize)]
 pub struct UserResponse {
     pub id: Uuid,
     pub email: String,

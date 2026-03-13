@@ -3,7 +3,6 @@ use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use std::fmt::Display;
 use std::str::FromStr;
-use tracing_subscriber::field::debug;
 use uuid::Uuid;
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
@@ -32,7 +31,7 @@ impl FromStr for TaskStatus {
             "todo" => Ok(TaskStatus::Todo),
             "in_progress" => Ok(TaskStatus::InProgress),
             "done" => Ok(TaskStatus::Done),
-            _ => Err(format!("'{}' not is a valid error", s)),
+            _ => Err(format!("'{}' is not a valid status", s)),
         }
     }
 }
@@ -43,29 +42,49 @@ impl From<String> for TaskStatus {
     }
 }
 
+impl From<sqlx::types::Json<Option<TaskStatus>>> for TaskStatus {
+    fn from(_: sqlx::types::Json<Option<TaskStatus>>) -> Self {
+        TaskStatus::Todo
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize, FromRow)]
 pub struct Task {
     pub id: Uuid,
     pub title: String,
     pub description: Option<String>,
-    #[sqlx(try_from = "String")]
-    pub status: TaskStatus,
+    pub status: String,
     pub project_id: Uuid,
-    pub assigned_to: DateTime<Utc>,
+    pub assigned_to: Option<Uuid>,
+    pub created_at: DateTime<Utc>,
 }
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct CreateTaskPayload {
     pub title: String,
     pub description: Option<String>,
-    pub status: Option<TaskStatus>,
-    pub assigned_to: DateTime<Utc>,
+    pub status: Option<String>,
+    pub assigned_to: Option<Uuid>,
 }
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct UpdateTaskPayload {
     pub title: Option<String>,
     pub description: Option<String>,
-    pub status: Option<TaskStatus>,
-    pub assigned_to: DateTime<Utc>,
+    pub status: Option<String>,
+    pub assigned_to: Option<Uuid>,
+}
+
+/// Filtros para listar tareas
+#[derive(Debug, Deserialize, Clone, Default)]
+pub struct TaskFilters {
+    pub status: Option<String>,
+}
+
+/// Parámetros de paginación y filtros para tareas
+#[derive(Debug, Deserialize)]
+pub struct TaskQueryParams {
+    pub page: Option<i64>,
+    pub limit: Option<i64>,
+    pub status: Option<String>,
 }
