@@ -1,20 +1,21 @@
 use crate::{
     helpers::{
         errors::AppError,
-        jwt::encode_jwt,
+        jwt::{decode_jwt, encode_jwt},
         password::{hash_password, verify_password},
     },
     models::{
-        auth_model::{LoginPayload, RegisterPayload},
+        auth_model::{Claim, LoginPayload, RegisterPayload},
         user_model::User,
     },
-    states::DbState,
+    states::AppState,
 };
 
 pub struct AuthService;
 
 impl AuthService {
-    pub async fn register_user(db: &DbState, payload: RegisterPayload) -> Result<User, AppError> {
+    // Registrar usuario
+    pub async fn register_user(db: &AppState, payload: RegisterPayload) -> Result<User, AppError> {
         let hashed_password: String = hash_password(&payload.password)?;
 
         let user: User = sqlx::query_as!(
@@ -27,14 +28,15 @@ impl AuthService {
             payload.email,
             hashed_password
         )
-        .fetch_one(db)
+        .fetch_one(&db.db)
         .await?;
 
         Ok(user)
     }
 
-    pub async fn login_user(db: &DbState, payload: LoginPayload) -> Result<String, AppError> {
-        let user = sqlx::query_as!(
+    // Iniciar sesion del usuario
+    pub async fn login_user(db: &AppState, payload: LoginPayload) -> Result<String, AppError> {
+        let user: User = sqlx::query_as!(
             User,
             r#"
                 SELECT id, email, password_hash, created_at as "created_at!"
@@ -42,7 +44,7 @@ impl AuthService {
             "#,
             payload.email
         )
-        .fetch_optional(db)
+        .fetch_optional(&db.db)
         .await?
         .ok_or(AppError::NotFound("Invalid Credentials".to_string()))?;
 
@@ -56,7 +58,8 @@ impl AuthService {
         Ok(token)
     }
 
-    pub async fn get_current_user(db: &DbState, email: &str) -> Result<User, AppError> {
+    // Obtener el usuario segun su email
+    pub async fn get_current_user(db: &AppState, email: &str) -> Result<User, AppError> {
         let user: User = sqlx::query_as!(
             User,
             r#"
@@ -65,9 +68,29 @@ impl AuthService {
             "#,
             email
         )
-        .fetch_one(db)
+        .fetch_one(&db.db)
         .await?;
 
         Ok(user)
+    }
+
+    // Obtener el id del usuario
+    pub async fn get_user_id_from_token(
+        db: &AppState,
+        token: &str,
+    ) -> Result<uuid::Uuid, AppError> {
+        let claims: Claim = decode_jwt(token)?;
+
+        // Buscar el usuario por email en la base de datos
+        let user: User = sqlx::query_as!(
+            User,
+            "SELECT id, email, password_hash, created_at as \"created_at!\" FROM users WHERE email = $1",
+            claims.sub
+        )
+        .fetch_optional(&db.db)
+        .await?
+        .ok_or(AppError::NotFound("User not found".to_string()))?;
+
+        Ok(user.id)
     }
 }
