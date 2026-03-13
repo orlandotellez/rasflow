@@ -3,6 +3,7 @@ mod config;
 mod db;
 mod handlers;
 mod helpers;
+mod middlewares;
 mod models;
 mod routes;
 mod services;
@@ -10,6 +11,7 @@ mod states;
 
 use axum::Router;
 use dotenvy::dotenv;
+use states::AppState;
 use tokio::net::TcpListener;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
@@ -35,7 +37,15 @@ async fn main() {
 
     tracing::info!("Database connected");
 
-    let router: Router = routes::create_routes().with_state(db);
+    let redis = cache::redis::get_redis_client()
+        .await
+        .expect("Error connecting to Redis");
+
+    tracing::info!("Redis connected");
+
+    let app_state: AppState = AppState::new(db, redis);
+
+    let router: Router = routes::create_routes().with_state(app_state);
 
     let addr: String = format!("{}:{}", HOST, PORT);
 
