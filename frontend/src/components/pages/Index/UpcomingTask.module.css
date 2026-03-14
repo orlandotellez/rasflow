@@ -1,0 +1,118 @@
+/* UpcomingTask */
+.dueTodayCard {
+  padding: 1.5rem;
+  background-color: var(--card-color);
+  border: 1px solid var(--border-color);
+  border-radius: 5px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 2rem;
+}
+
+.cardTitle {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--font-color-title);
+}
+
+.remainingBadge {
+  font-size: 0.625rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--font-color-text);
+}
+
+.taskList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+.noTasks {
+  text-align: center;
+  color: var(--font-color-text);
+  font-size: 0.875rem;
+  padding: 2rem 1rem;
+}
+
+.taskItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem;
+  background-color: var(--altern-color);
+  border: 1px solid transparent;
+  border-radius: 5px;
+  transition: all 0.2s;
+}
+
+.taskItem:hover {
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.taskLeft {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.checkbox {
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 0.25rem;
+  border: 2px solid var(--border-color);
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.checkbox:hover {
+  border-color: var(--four-color);
+}
+
+.taskInfo {
+  display: flex;
+  flex-direction: column;
+}
+
+.taskTitle {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--font-color-title);
+}
+
+.taskMeta {
+  font-size: 0.75rem;
+  color: var(--font-color-text);
+  margin-top: 0.125rem;
+}
+
+.taskRight {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.statusSelect {
+  padding: 0.25rem 0.5rem;
+  background-color: var(--primary-color);
+  border: 1px solid var(--border-color);
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+  color: var(--font-color-text);
+  cursor: pointer;
+}
+
+.statusSelect:focus {
+  outline: none;
+  border-color: var(--altern-secondary-color);
+}
