@@ -5,11 +5,11 @@ import { useAuthStore } from '@/store/authStore';
 import styles from './Index.module.css';
 import { PleaseLogIn } from '@/components/common/PleaseLogIn';
 import { Loading } from '@/components/common/Loading';
-import { SummaryWidgets } from '@/components/pages/Index/SummaryWidgets';
-import { ProductivityChart } from '@/components/pages/Index/ProductivityChart';
-import { ActiveProjects } from '@/components/pages/Index/ActiveProjects';
-import { UpcomingTask } from '@/components/pages/Index/UpcomingTask';
-import { QuickStats } from '@/components/pages/Index/QuickStats';
+import { SummaryWidgets } from '@/components/pages/index/SummaryWidgets';
+import { ProductivityChart } from '@/components/pages/index/ProductivityChart';
+import { ActiveProjects } from '@/components/pages/index/ActiveProjects';
+import { UpcomingTask } from '@/components/pages/index/UpcomingTask';
+import { QuickStats } from '@/components/pages/index/QuickStats';
 
 const Index = () => {
   const { isLoading, fetchDashboardData } = useDashboardStore();
