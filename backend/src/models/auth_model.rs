@@ -10,6 +10,7 @@ pub struct Claim {
 #[derive(Deserialize, Clone, Debug)]
 pub struct RegisterPayload {
     pub email: String,
+    pub username: String,
     pub password: String,
 }
 

@@ -21,11 +21,12 @@ impl AuthService {
         let user: User = sqlx::query_as!(
             User,
             r#"
-                INSERT INTO users (email, password_hash)
-                VALUES ($1, $2)
-                RETURNING id, email, password_hash, created_at as "created_at!"
+                INSERT INTO users (email, username, password_hash)
+                VALUES ($1, $2, $3)
+                RETURNING id, email, username, password_hash, created_at as "created_at!"
             "#,
             payload.email,
+            payload.username,
             hashed_password
         )
         .fetch_one(&db.db)
@@ -39,7 +40,7 @@ impl AuthService {
         let user: User = sqlx::query_as!(
             User,
             r#"
-                SELECT id, email, password_hash, created_at as "created_at!"
+                SELECT id, email, username, password_hash, created_at as "created_at!"
                 FROM users WHERE email = $1
             "#,
             payload.email
@@ -63,7 +64,7 @@ impl AuthService {
         let user: User = sqlx::query_as!(
             User,
             r#"
-                SELECT id, email, password_hash, created_at as "created_at!"
+                SELECT id, email, username, password_hash, created_at as "created_at!"
                 FROM users WHERE email = $1
             "#,
             email
@@ -84,7 +85,7 @@ impl AuthService {
         // Buscar el usuario por email en la base de datos
         let user: User = sqlx::query_as!(
             User,
-            "SELECT id, email, password_hash, created_at as \"created_at!\" FROM users WHERE email = $1",
+            "SELECT id, email, username, password_hash, created_at as \"created_at!\" FROM users WHERE email = $1",
             claims.sub
         )
         .fetch_optional(&db.db)

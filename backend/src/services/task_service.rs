@@ -7,6 +7,7 @@ use crate::{
     },
     states::AppState,
 };
+use sqlx::Row;
 
 pub struct TaskService;
 
@@ -30,21 +31,30 @@ impl TaskService {
 
         let status: String = payload.status.unwrap_or_else(|| "todo".to_string());
 
-        let task: Task = sqlx::query_as!(
-            Task,
+        let row = sqlx::query(
             r#"
                 INSERT INTO tasks (title, description, status, project_id, assigned_to)
                 VALUES ($1, $2, $3, $4, $5)
-                RETURNING id, title, description, status, project_id as "project_id!", assigned_to, created_at as "created_at!"
+                RETURNING id, title, description, status, project_id, assigned_to, created_at
             "#,
-            payload.title,
-            payload.description,
-            status,
-            project_id,
-            payload.assigned_to
         )
+        .bind(&payload.title)
+        .bind(&payload.description)
+        .bind(&status)
+        .bind(project_id)
+        .bind(&payload.assigned_to)
         .fetch_one(&db.db)
         .await?;
+
+        let task = Task {
+            id: row.get("id"),
+            title: row.get("title"),
+            description: row.get("description"),
+            status: row.get("status"),
+            project_id: row.get("project_id"),
+            assigned_to: row.get("assigned_to"),
+            created_at: row.get("created_at"),
+        };
 
         // Invalidar cache de tareas del proyecto
         let _ = invalidate_cache(&format!("tasks:project:{}:*", project_id)).await;
@@ -87,45 +97,75 @@ impl TaskService {
 
         let offset = (page - 1) * limit;
 
-        // Construir query con filtro opcional
-        let (count_query, tasks_query) = if let Some(ref status) = status_filter {
-            (
-                format!(
-                    "SELECT COUNT(*) FROM tasks WHERE project_id = $1 AND status = '{}'",
-                    status
-                ),
-                format!(
-                    "SELECT id, title, description, status, project_id, assigned_to, created_at 
-                     FROM tasks WHERE project_id = $1 AND status = '{}' 
-                     ORDER BY created_at DESC LIMIT $2 OFFSET $3",
-                    status
-                ),
+        // Queries que manejan NULL correctamente
+        let tasks: Vec<Task> = if let Some(ref status) = status_filter {
+            let rows = sqlx::query(
+                r#"
+                    SELECT id, title, description, status, project_id, assigned_to, created_at 
+                    FROM tasks WHERE project_id = $1 AND status = $2
+                    ORDER BY created_at DESC LIMIT $3 OFFSET $4
+                "#,
             )
-        } else {
-            (
-                "SELECT COUNT(*) FROM tasks WHERE project_id = $1".to_string(),
-                "SELECT id, title, description, status, project_id, assigned_to, created_at 
-                 FROM tasks WHERE project_id = $1 
-                 ORDER BY created_at DESC LIMIT $2 OFFSET $3"
-                    .to_string(),
-            )
-        };
-
-        // Obtener total
-        let total: (i64,) = sqlx::query_as(&count_query)
             .bind(project_id)
-            .fetch_one(&db.db)
+            .bind(status)
+            .bind(limit)
+            .bind(offset)
+            .fetch_all(&db.db)
             .await?;
 
-        // Obtener tareas
-        let tasks: Vec<Task> = sqlx::query_as(&tasks_query)
+            rows.into_iter().map(|row| Task {
+                id: row.get("id"),
+                title: row.get("title"),
+                description: row.get("description"),
+                status: row.get("status"),
+                project_id: row.get("project_id"),
+                assigned_to: row.get("assigned_to"),
+                created_at: row.get("created_at"),
+            }).collect()
+        } else {
+            let rows = sqlx::query(
+                r#"
+                    SELECT id, title, description, status, project_id, assigned_to, created_at 
+                    FROM tasks WHERE project_id = $1
+                    ORDER BY created_at DESC LIMIT $2 OFFSET $3
+                "#,
+            )
             .bind(project_id)
             .bind(limit)
             .bind(offset)
             .fetch_all(&db.db)
             .await?;
 
-        let meta = PaginationMeta::new(page, limit, total.0);
+            rows.into_iter().map(|row| Task {
+                id: row.get("id"),
+                title: row.get("title"),
+                description: row.get("description"),
+                status: row.get("status"),
+                project_id: row.get("project_id"),
+                assigned_to: row.get("assigned_to"),
+                created_at: row.get("created_at"),
+            }).collect()
+        };
+
+        // Obtener total
+        let total: i64 = if let Some(ref status) = status_filter {
+            sqlx::query_scalar(
+                "SELECT COUNT(*) FROM tasks WHERE project_id = $1 AND status = $2"
+            )
+            .bind(project_id)
+            .bind(status)
+            .fetch_one(&db.db)
+            .await?
+        } else {
+            sqlx::query_scalar(
+                "SELECT COUNT(*) FROM tasks WHERE project_id = $1"
+            )
+            .bind(project_id)
+            .fetch_one(&db.db)
+            .await?
+        };
+
+        let meta = PaginationMeta::new(page, limit, total);
         let response = PaginatedResponse { data: tasks, meta };
 
         // Guardar en cache por 60 segundos
@@ -140,22 +180,29 @@ impl TaskService {
         user_id: uuid::Uuid,
         task_id: uuid::Uuid,
     ) -> Result<Task, AppError> {
-        let task: Task = sqlx::query_as!(
-            Task,
+        let row = sqlx::query(
             r#"
                 SELECT t.id, t.title, t.description, t.status, t.project_id, t.assigned_to, t.created_at
                 FROM tasks t
                 INNER JOIN projects p ON t.project_id = p.id
                 WHERE t.id = $1 AND p.owner_id = $2
             "#,
-            task_id,
-            user_id
         )
+        .bind(task_id)
+        .bind(user_id)
         .fetch_optional(&db.db)
         .await?
         .ok_or(AppError::NotFound("Task not found".to_string()))?;
 
-        Ok(task)
+        Ok(Task {
+            id: row.get("id"),
+            title: row.get("title"),
+            description: row.get("description"),
+            status: row.get("status"),
+            project_id: row.get("project_id"),
+            assigned_to: row.get("assigned_to"),
+            created_at: row.get("created_at"),
+        })
     }
 
     /// Actualizar una tarea
@@ -166,42 +213,50 @@ impl TaskService {
         payload: UpdateTaskPayload,
     ) -> Result<Task, AppError> {
         // Primero verificar que la tarea pertenece a un proyecto del usuario
-        let existing = sqlx::query_as!(
-            Task,
+        let existing = sqlx::query(
             r#"
                 SELECT t.id, t.title, t.description, t.status, t.project_id, t.assigned_to, t.created_at
                 FROM tasks t
                 INNER JOIN projects p ON t.project_id = p.id
                 WHERE t.id = $1 AND p.owner_id = $2
             "#,
-            task_id,
-            user_id
         )
+        .bind(task_id)
+        .bind(user_id)
         .fetch_optional(&db.db)
         .await?
         .ok_or(AppError::NotFound("Task not found".to_string()))?;
 
-        let title = payload.title.unwrap_or(existing.title);
-        let description = payload.description.or(existing.description);
-        let status = payload.status.unwrap_or(existing.status);
-        let assigned_to = payload.assigned_to.or(existing.assigned_to);
+        let title = payload.title.unwrap_or_else(|| existing.get("title"));
+        let description = payload.description.or_else(|| existing.get("description"));
+        let status = payload.status.unwrap_or_else(|| existing.get("status"));
+        let assigned_to = payload.assigned_to.or_else(|| existing.get("assigned_to"));
 
-        let task: Task = sqlx::query_as!(
-            Task,
+        let row = sqlx::query(
             r#"
                 UPDATE tasks
                 SET title = $1, description = $2, status = $3, assigned_to = $4
                 WHERE id = $5
-                RETURNING id, title, description, status, project_id as "project_id!", assigned_to, created_at as "created_at!"
+                RETURNING id, title, description, status, project_id, assigned_to, created_at
             "#,
-            title,
-            description,
-            status,
-            assigned_to,
-            task_id
         )
+        .bind(&title)
+        .bind(&description)
+        .bind(&status)
+        .bind(&assigned_to)
+        .bind(task_id)
         .fetch_one(&db.db)
         .await?;
+
+        let task = Task {
+            id: row.get("id"),
+            title: row.get("title"),
+            description: row.get("description"),
+            status: row.get("status"),
+            project_id: row.get("project_id"),
+            assigned_to: row.get("assigned_to"),
+            created_at: row.get("created_at"),
+        };
 
         // Invalidar cache
         let _ = invalidate_cache(&format!("tasks:project:{}:*", task.project_id)).await;
@@ -215,21 +270,21 @@ impl TaskService {
         user_id: uuid::Uuid,
         task_id: uuid::Uuid,
     ) -> Result<(), AppError> {
-        // Verificar que la tarea pertenece a un proyecto del usuario
-        let task: Task = sqlx::query_as!(
-            Task,
+        // Primero verificar que la tarea existe y pertenece al usuario
+        let project_id: Option<uuid::Uuid> = sqlx::query_scalar(
             r#"
-                SELECT t.id, t.title, t.description, t.status, t.project_id, t.assigned_to, t.created_at
+                SELECT t.project_id
                 FROM tasks t
                 INNER JOIN projects p ON t.project_id = p.id
                 WHERE t.id = $1 AND p.owner_id = $2
-            "#,
-            task_id,
-            user_id
+            "#
         )
+        .bind(task_id)
+        .bind(user_id)
         .fetch_optional(&db.db)
-        .await?
-        .ok_or(AppError::NotFound("Task not found".to_string()))?;
+        .await?;
+
+        let project_id = project_id.ok_or(AppError::NotFound("Task not found".to_string()))?;
 
         let result = sqlx::query!("DELETE FROM tasks WHERE id = $1", task_id)
             .execute(&db.db)
@@ -240,7 +295,7 @@ impl TaskService {
         }
 
         // Invalidar cache
-        let _ = invalidate_cache(&format!("tasks:project:{}:*", task.project_id)).await;
+        let _ = invalidate_cache(&format!("tasks:project:{}:*", project_id)).await;
 
         Ok(())
     }

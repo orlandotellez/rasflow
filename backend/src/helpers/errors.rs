@@ -67,6 +67,25 @@ impl From<sqlx::Error> for AppError {
     fn from(err: sqlx::Error) -> Self {
         match err {
             sqlx::Error::RowNotFound => AppError::NotFound("Recurso no encontrado".to_string()),
+            // Detectar errores de restricción única (código 23505 en PostgreSQL)
+            sqlx::Error::Database(db_err) => {
+                let error_code = db_err.code();
+                if let Some(code) = error_code {
+                    // PostgreSQL unique_violation error code
+                    if code == "23505" {
+                        let message = db_err.message();
+                        // El mensaje de PostgreSQL incluye el nombre del constraint
+                        // Intentamos parsear para dar un mensaje más específico
+                        if message.contains("email") {
+                            return AppError::BadRequest("El email ya está registrado".to_string());
+                        } else if message.contains("username") {
+                            return AppError::BadRequest("El username ya está en uso".to_string());
+                        }
+                        return AppError::BadRequest("El email o username ya existe".to_string());
+                    }
+                }
+                AppError::InternalServerError(db_err.to_string())
+            }
             _ => AppError::InternalServerError(err.to_string()),
         }
     }

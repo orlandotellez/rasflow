@@ -20,9 +20,7 @@ pub async fn register_user(
     State(db): State<AppState>,
     Json(payload): Json<RegisterPayload>,
 ) -> Result<Json<ApiResponse<User>>, AppError> {
-    let register_user: User = AuthService::register_user(&db, payload)
-        .await
-        .map_err(|_| AppError::InternalServerError("Internal server error".to_string()))?;
+    let register_user: User = AuthService::register_user(&db, payload).await?;
 
     let response: ApiResponse<User> =
         ApiResponse::success(register_user, "User registered successfully");
