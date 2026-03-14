@@ -35,10 +35,10 @@ export const checkAuth = async () => {
     if (response.success) {
       return response.data;
     }
+    // No limpiamos el token aquí - solo el 401 debería hacerlo
     return null;
   } catch {
-    api.setToken(null);
+    // Error de red, no limpiamos el token
     return null;
   }
 }
-

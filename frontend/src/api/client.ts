@@ -2,6 +2,13 @@ import type { ApiResponse } from '@/types/api';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
+// Callback para notificar logout por 401
+let onUnauthorized: (() => void) | null = null;
+
+export const setOnUnauthorizedCallback = (callback: (() => void) | null) => {
+  onUnauthorized = callback;
+};
+
 class ApiClient {
   private token: string | null = null;
 
@@ -46,9 +53,13 @@ class ApiClient {
       headers,
     });
 
-    // Si es 401, limpiar token
+    // Si es 401, limpiar token Y notificar al store
     if (response.status === 401) {
       this.setToken(null);
+      // Notificar al callback de logout si existe
+      if (onUnauthorized) {
+        onUnauthorized();
+      }
     }
 
     const data = await response.json();
