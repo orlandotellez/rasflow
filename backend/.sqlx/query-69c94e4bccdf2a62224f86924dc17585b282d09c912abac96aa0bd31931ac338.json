@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n                SELECT id, email, password_hash, created_at as \"created_at!\"\n                FROM users WHERE email = $1\n            ",
+  "query": "\n                SELECT id, email, username, password_hash, created_at as \"created_at!\"\n                FROM users WHERE email = $1\n            ",
   "describe": {
     "columns": [
       {
@@ -15,11 +15,16 @@
       },
       {
         "ordinal": 2,
-        "name": "password_hash",
+        "name": "username",
         "type_info": "Text"
       },
       {
         "ordinal": 3,
+        "name": "password_hash",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 4,
         "name": "created_at!",
         "type_info": "Timestamptz"
       }
@@ -33,8 +38,9 @@
       false,
       false,
       false,
+      false,
       false
     ]
   },
-  "hash": "c27389c4aa66a4554b4a92096228e3b08a3e644bcec76307b02deafb3227ff6c"
+  "hash": "69c94e4bccdf2a62224f86924dc17585b282d09c912abac96aa0bd31931ac338"
 }

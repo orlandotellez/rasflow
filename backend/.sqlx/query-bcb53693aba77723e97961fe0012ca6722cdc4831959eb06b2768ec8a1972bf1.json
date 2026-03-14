@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n                INSERT INTO users (email, password_hash)\n                VALUES ($1, $2)\n                RETURNING id, email, password_hash, created_at as \"created_at!\"\n            ",
+  "query": "\n                INSERT INTO users (email, username, password_hash)\n                VALUES ($1, $2, $3)\n                RETURNING id, email, username, password_hash, created_at as \"created_at!\"\n            ",
   "describe": {
     "columns": [
       {
@@ -15,17 +15,23 @@
       },
       {
         "ordinal": 2,
-        "name": "password_hash",
+        "name": "username",
         "type_info": "Text"
       },
       {
         "ordinal": 3,
+        "name": "password_hash",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 4,
         "name": "created_at!",
         "type_info": "Timestamptz"
       }
     ],
     "parameters": {
       "Left": [
+        "Text",
         "Text",
         "Text"
       ]
@@ -34,8 +40,9 @@
       false,
       false,
       false,
+      false,
       false
     ]
   },
-  "hash": "ced2f155abc7d86a581546ef3f1b7887d0566ebc4bb5cf6f64a48f470309d59d"
+  "hash": "bcb53693aba77723e97961fe0012ca6722cdc4831959eb06b2768ec8a1972bf1"
 }
