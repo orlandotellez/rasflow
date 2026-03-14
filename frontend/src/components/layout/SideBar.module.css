@@ -133,3 +133,111 @@
 .isCollapsedIcon {
   justify-content: center;
 }
+
+/* Auth Section */
+.authSection {
+  padding: 12px 8px;
+  border-top: 1px solid var(--border-color);
+  width: 100%;
+}
+
+.userInfo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  margin-bottom: 8px;
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.userAvatar {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 5px;
+  background: transparent;
+  border: none;
+  color: var(--font-color-text);
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+}
+
+.userEmail {
+  flex: 1;
+  color: white;
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.logoutButton {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 5px;
+  background: transparent;
+  border: none;
+  color: var(--font-color-text);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.logoutButton:hover {
+  background: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+}
+
+/* Auth Buttons (when not logged in) */
+.authButtons {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 8px;
+  border-top: 1px solid var(--border-color);
+  width: 100%;
+}
+
+.loginButton,
+.registerButton {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px;
+  border-radius: 5px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.loginButton {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: white;
+}
+
+.loginButton:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: white;
+}
+
+.registerButton {
+  background: white;
+  border: none;
+  color: var(--secondary-color);
+}
+
+.registerButton:hover {
+  background: rgba(255, 255, 255, 0.9);
+}

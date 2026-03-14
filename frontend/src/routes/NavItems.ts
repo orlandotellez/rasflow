@@ -3,7 +3,6 @@ import {
   Presentation,
   Tags,
   LucideComponent,
-  ArrowsUpFromLineIcon,
   User,
 } from "lucide-react";
 
@@ -15,11 +14,9 @@ interface NavItem {
 
 export const navItems: NavItem[] = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/" },
-  { icon: Tags, label: "Task management", path: "/tasks" },
-  { icon: ArrowsUpFromLineIcon, label: "Upcoming tasks", path: "/upcoming" },
-
-  { icon: LucideComponent, label: "Completed tasks", path: "/completed" },
   { icon: Presentation, label: "Projects", path: "/projects" },
+  { icon: Tags, label: "Task management", path: "/tasks" },
+  { icon: LucideComponent, label: "Completed tasks", path: "/completed" },
   { icon: User, label: "User profile", path: "/profile" },
 ];
 

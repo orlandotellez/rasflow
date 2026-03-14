@@ -1,11 +1,15 @@
 import { useNavigate, useLocation } from "react-router-dom";
-import { ChevronLeft, ChevronRight, Tags } from "lucide-react";
+import { ChevronLeft, ChevronRight, Tags, LogOut, LogIn, UserPlus } from "lucide-react";
 import { navItems } from "@/routes/NavItems";
 import styles from "./SideBar.module.css";
 import { useSideBarStore } from "@/store/sideBarStore";
+import { useAuthStore } from "@/store/authStore";
+import { useModalStore } from "@/store/modalStore";
 
 export const SideBar = () => {
   const { collapsed, setCollapsed } = useSideBarStore();
+  const { isAuthenticated, logout } = useAuthStore();
+  const { openLoginModal, openRegisterModal } = useModalStore();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -61,6 +65,33 @@ export const SideBar = () => {
             )}
           </button>
         </div>
+
+        {/* Auth Section */}
+        {isAuthenticated ? (
+          <div className={styles.authSection}>
+            <button onClick={logout} className={styles.logoutButton}>
+              <LogOut size={24} />
+              {!collapsed && <span>Cerrar Sesión</span>}
+            </button>
+          </div>
+        ) : (
+          <div className={styles.authButtons}>
+            <button
+              onClick={openLoginModal}
+              className={styles.loginButton}
+            >
+              <LogIn />
+              {!collapsed && "Iniciar Sesión"}
+            </button>
+            <button
+              onClick={openRegisterModal}
+              className={styles.registerButton}
+            >
+              <UserPlus />
+              {!collapsed && "Registrarse"}
+            </button>
+          </div>
+        )}
       </aside>
     </>
   );
