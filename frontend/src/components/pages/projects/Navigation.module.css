@@ -1,0 +1,61 @@
+.controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.tabs {
+  display: flex;
+  gap: 2rem;
+  margin-top: 1.5rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.tab {
+  padding-bottom: 1rem;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--font-color-text);
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.2s;
+}
+
+.tab:hover {
+  color: var(--font-color-title);
+}
+
+.tabActive {
+  font-weight: 700;
+  color: var(--font-color-title);
+  border-bottom-color: var(--font-color-title);
+}
+
+.viewToggle {
+  display: flex;
+  gap: 0.25rem;
+  border: 1px solid var(--border-color);
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+.viewBtn {
+  width: 2.25rem;
+  height: 2.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--card-color);
+  border: none;
+  cursor: pointer;
+  color: var(--font-color-text);
+}
+
+.viewBtnActive {
+  background-color: var(--four-color);
+  color: var(--primary-color);
+}

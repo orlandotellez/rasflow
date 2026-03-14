@@ -69,13 +69,6 @@
   background-color: var(--altern-color);
 }
 
-.userAvatar {
-  width: 2rem;
-  height: 2rem;
-  border-radius: 50%;
-  background-color: var(--altern-secondary-color);
-}
-
 .newProjectBtn {
   display: flex;
   align-items: center;
@@ -95,68 +88,6 @@
 
 .newProjectBtn span {
   font-size: 1rem;
-}
-
-.controls {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  border-bottom: 1px solid var(--border-color);
-}
-
-.tabs {
-  display: flex;
-  gap: 2rem;
-  margin-top: 1.5rem;
-  border-bottom: 1px solid var(--border-color);
-}
-
-.tab {
-  padding-bottom: 1rem;
-  background: none;
-  border: none;
-  border-bottom: 2px solid transparent;
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--font-color-text);
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.tab:hover {
-  color: var(--font-color-title);
-}
-
-.tabActive {
-  font-weight: 700;
-  color: var(--font-color-title);
-  border-bottom-color: var(--font-color-title);
-}
-
-
-.viewToggle {
-  display: flex;
-  gap: 0.25rem;
-  border: 1px solid var(--border-color);
-  border-radius: 0.5rem;
-  overflow: hidden;
-}
-
-.viewBtn {
-  width: 2.25rem;
-  height: 2.25rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: var(--card-color);
-  border: none;
-  cursor: pointer;
-  color: var(--font-color-text);
-}
-
-.viewBtnActive {
-  background-color: var(--four-color);
-  color: var(--primary-color);
 }
 
 .content {
@@ -181,221 +112,26 @@
   color: var(--font-color-text);
 }
 
-.projectsGrid {
-  display: grid;
-  grid-template-columns: repeat(1, 1fr);
-  gap: 1.5rem;
-}
-
-@media (min-width: 768px) {
-  .projectsGrid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (min-width: 1280px) {
-  .projectsGrid {
-    grid-template-columns: repeat(3, 1fr);
-  }
-}
-
-.projectCard {
-  background-color: var(--card-color);
-  border: 1px solid var(--border-color);
-  border-radius: 0.75rem;
-  padding: 1.5rem;
+.errorContainer {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  align-items: center;
+  gap: 1rem;
+  padding: 4rem 2rem;
+  color: var(--font-color-text);
 }
 
-.cardHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-}
-
-.projectIcon {
-  width: 3rem;
-  height: 3rem;
+.retryButton {
+  padding: 0.5rem 1.5rem;
+  background-color: var(--secondary-color);
+  color: white;
+  border: none;
   border-radius: 0.5rem;
-  background-color: var(--four-color);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--primary-color);
-}
-
-.status {
-  font-size: 0.625rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  padding: 0.25rem 0.5rem;
-  border-radius: 0.25rem;
-}
-
-.statusOnTrack {
-  background-color: #dcfce7;
-  color: #16a34a;
-}
-
-.statusAtRisk {
-  background-color: #ffedd5;
-  color: #c2410c;
-}
-
-.statusInReview {
-  background-color: #dbeafe;
-  color: #1d4ed8;
-}
-
-.statusOnHold {
-  background-color: #f1f5f9;
-  color: #475569;
-}
-
-.cardBody {
-  flex: 1;
-}
-
-.projectTitle {
-  font-size: 1.125rem;
-  font-weight: 700;
-  color: var(--font-color-title);
-  margin-bottom: 0.25rem;
-}
-
-.projectDesc {
   font-size: 0.875rem;
-  color: var(--font-color-text);
-  line-height: 1.5;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.progressSection {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.progressHeader {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.75rem;
   font-weight: 500;
-}
-
-.progressLabel {
-  color: var(--font-color-text);
-}
-
-.progressValue {
-  color: var(--font-color-title);
-}
-
-.progressBar {
-  width: 100%;
-  height: 0.5rem;
-  background-color: var(--altern-color);
-  border-radius: 9999px;
-  overflow: hidden;
-}
-
-.progressFill {
-  height: 100%;
-  background-color: var(--four-color);
-  border-radius: 9999px;
-}
-
-.cardFooter {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: auto;
-}
-
-.teamAvatars {
-  display: flex;
-  margin-left: -0.5rem;
-}
-
-.teamAvatar {
-  width: 2rem;
-  height: 2rem;
-  border-radius: 50%;
-  background-color: var(--font-color-text);
-  border: 2px solid var(--card-color);
-  margin-left: -0.5rem;
-}
-
-.teamAvatarMore {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.625rem;
-  font-weight: 700;
-  color: var(--primary-color);
-  background-color: var(--altern-secondary-color);
-}
-
-.dueDate {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-  font-size: 0.75rem;
-  color: var(--font-color-text);
-}
-
-.dueDate span {
-  font-size: 0.875rem;
-}
-
-.addProjectCard {
-  border: 2px dashed var(--border-color);
-  border-radius: 0.75rem;
-  padding: 1.5rem;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 0.75rem;
-  background: transparent;
   cursor: pointer;
-  transition: all 0.2s;
-  min-height: 280px;
 }
 
-.addProjectCard:hover {
-  background-color: var(--altern-color);
-  border-color: var(--four-color);
-}
-
-.addIcon {
-  width: 3rem;
-  height: 3rem;
-  border-radius: 50%;
-  border: 2px dashed var(--border-color);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: border-color 0.2s;
-}
-
-.addProjectCard:hover .addIcon {
-  border-color: var(--four-color);
-}
-
-.addText {
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: var(--font-color-text);
-  transition: color 0.2s;
-}
-
-.addProjectCard:hover .addText {
-  color: var(--font-color-title);
+.retryButton:hover {
+  background-color: var(--altern-secondary-color);
 }

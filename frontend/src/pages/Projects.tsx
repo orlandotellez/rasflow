@@ -1,79 +1,47 @@
+import { useEffect, useState } from 'react';
 import { Bell, Plus, Search } from 'lucide-react';
+import { useProjectsStore } from '@/store/projectStore';
+import { useAuthStore } from '@/store/authStore';
+import { useModalStore } from '@/store/modalStore';
 import styles from './Projects.module.css';
+import { PleaseLogIn } from '@/components/common/PleaseLogIn';
+import { Loading } from '@/components/common/Loading';
+import { Navigation } from '@/components/pages/projects/Navigation';
+import { NoProjects } from '@/components/pages/projects/NoProjects';
+import { MyProjects } from '@/components/pages/projects/MyProjects';
 
 const Projects = () => {
-  const projects = [
-    {
-      id: 1,
-      title: 'Mobile App Redesign',
-      description: 'Creating a new design system for the core mobile application and user interface components.',
-      progress: 74,
-      status: 'onTrack',
-      icon: 'design_services',
-      dueDate: 'Nov 24',
-      teamSize: 5
-    },
-    {
-      id: 2,
-      title: 'Backend Infrastructure',
-      description: 'Migrating core services to a more scalable architecture and database optimization.',
-      progress: 32,
-      status: 'atRisk',
-      icon: 'terminal',
-      dueDate: 'Dec 12',
-      teamSize: 2
-    },
-    {
-      id: 3,
-      title: 'Q4 Market Report',
-      description: 'Analytical study of market trends and performance metrics for the final quarter.',
-      progress: 90,
-      status: 'inReview',
-      icon: 'analytics',
-      dueDate: 'Tomorrow',
-      teamSize: 1
-    },
-    {
-      id: 4,
-      title: 'Brand Awareness Ad',
-      description: 'Social media campaign focused on new user acquisition and brand storytelling.',
-      progress: 58,
-      status: 'onTrack',
-      icon: 'campaign',
-      dueDate: 'Jan 15',
-      teamSize: 3
-    },
-    {
-      id: 5,
-      title: 'Customer Support Portal',
-      description: 'Revamping the help center and ticketing system integration for better user support.',
-      progress: 15,
-      status: 'onHold',
-      icon: 'support_agent',
-      dueDate: 'Feb 10',
-      teamSize: 1
-    }
-  ];
+  const { projects, isLoading, error, pagination, fetchProjects, deleteProject } = useProjectsStore();
+  const { isAuthenticated } = useAuthStore();
+  const { openProjectModal } = useModalStore();
 
-  const getStatusClass = (status: string) => {
-    switch (status) {
-      case 'onTrack': return styles.statusOnTrack;
-      case 'atRisk': return styles.statusAtRisk;
-      case 'inReview': return styles.statusInReview;
-      case 'onHold': return styles.statusOnHold;
-      default: return '';
+  const [searchTerm, setSearchTerm] = useState('');
+  const [activeTab, setActiveTab] = useState('all');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchProjects();
+    }
+  }, [isAuthenticated, fetchProjects]);
+
+  // Filtrar proyectos por búsqueda
+  const filteredProjects = projects.filter(project =>
+    project.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  // Formatear fecha
+
+  const handleDeleteProject = async (id: string) => {
+    if (window.confirm('Are you sure you want to delete this project?')) {
+      await deleteProject(id);
     }
   };
 
-  const getStatusLabel = (status: string) => {
-    switch (status) {
-      case 'onTrack': return 'On Track';
-      case 'atRisk': return 'At Risk';
-      case 'inReview': return 'In Review';
-      case 'onHold': return 'On Hold';
-      default: return status;
-    }
-  };
+  // Si no está autenticado, mostrar mensaje
+  if (!isAuthenticated) {
+    return <PleaseLogIn page="Projects" message="Please log in to view your projects" />
+  }
 
   return (
     <main className={styles.main}>
@@ -90,105 +58,65 @@ const Projects = () => {
             <input
               type="text"
               placeholder="Search projects..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
               className={styles.searchInput}
             />
           </div>
-          <button className={styles.newProjectBtn}>
+          <button
+            className={styles.newProjectBtn}
+            onClick={() => openProjectModal()}
+          >
             <Plus />
             New Project
           </button>
         </div>
       </header>
 
+      {/* Loading State */}
+      {isLoading && <Loading text='Loading projects...' />}
+
+      {/* Error State */}
+      {error && !isLoading && (
+        <div className={styles.errorContainer}>
+          <p>{error}</p>
+          <button onClick={() => fetchProjects()} className={styles.retryButton}>
+            Try Again
+          </button>
+        </div>
+      )}
+
       {/* View Controls */}
-      <div className={styles.controls}>
-        <div className={styles.tabs}>
-          <button className={`${styles.tab} ${styles.tabActive}`}>All Projects</button>
-          <button className={styles.tab}>Active</button>
-          <button className={styles.tab}>Completed</button>
-          <button className={styles.tab}>Archived</button>
-        </div>
-        <div className={styles.viewToggle}>
-          <button className={`${styles.viewBtn} ${styles.viewBtnActive}`}>
-            <span className="material-symbols-outlined">grid_view</span>
-          </button>
-          <button className={styles.viewBtn}>
-            <span className="material-symbols-outlined">list</span>
-          </button>
-        </div>
-      </div>
+      {!isLoading && !error && (
+        <>
+          <Navigation
+            activeTab={activeTab}
+            viewMode={viewMode}
+            setActiveTab={setActiveTab}
+            setViewMode={setViewMode}
+          />
 
-      {/* Content */}
-      <div className={styles.content}>
-        <div className={styles.sectionHeader}>
-          <h3 className={styles.sectionTitle}>Active Projects</h3>
-          <p className={styles.sectionSubtitle}>You have 8 active projects this month</p>
-        </div>
-
-        {/* Projects Grid */}
-        <div className={styles.projectsGrid}>
-          {projects.map((project) => (
-            <div key={project.id} className={styles.projectCard}>
-              <div className={styles.cardHeader}>
-                <div className={styles.projectIcon}>
-                  <span className="material-symbols-outlined">{project.icon}</span>
-                </div>
-                <span className={`${styles.status} ${getStatusClass(project.status)}`}>
-                  {getStatusLabel(project.status)}
-                </span>
-              </div>
-
-              <div className={styles.cardBody}>
-                <h4 className={styles.projectTitle}>{project.title}</h4>
-                <p className={styles.projectDesc}>{project.description}</p>
-              </div>
-
-              <div className={styles.progressSection}>
-                <div className={styles.progressHeader}>
-                  <span className={styles.progressLabel}>Progress</span>
-                  <span className={styles.progressValue}>{project.progress}%</span>
-                </div>
-                <div className={styles.progressBar}>
-                  <div
-                    className={styles.progressFill}
-                    style={{ width: `${project.progress}%` }}
-                  ></div>
-                </div>
-              </div>
-
-              <div className={styles.cardFooter}>
-                <div className={styles.teamAvatars}>
-                  {project.teamSize <= 3 ? (
-                    Array.from({ length: project.teamSize }).map((_, i) => (
-                      <div key={i} className={styles.teamAvatar}></div>
-                    ))
-                  ) : (
-                    <>
-                      <div className={styles.teamAvatar}></div>
-                      <div className={styles.teamAvatar}></div>
-                      <div className={`${styles.teamAvatar} ${styles.teamAvatarMore}`}>
-                        +{project.teamSize - 2}
-                      </div>
-                    </>
-                  )}
-                </div>
-                <div className={styles.dueDate}>
-                  <span className="material-symbols-outlined">calendar_today</span>
-                  Due {project.dueDate}
-                </div>
-              </div>
+          {/* Content */}
+          <div className={styles.content}>
+            <div className={styles.sectionHeader}>
+              <h3 className={styles.sectionTitle}>
+                {activeTab === 'all' ? 'All Projects' :
+                  activeTab === 'active' ? 'Active Projects' : 'Completed Projects'}
+              </h3>
+              <p className={styles.sectionSubtitle}>
+                You have {pagination.total} project{pagination.total !== 1 ? 's' : ''}
+              </p>
             </div>
-          ))}
 
-          {/* Add New Card */}
-          <button className={styles.addProjectCard}>
-            <div className={styles.addIcon}>
-              <span className="material-symbols-outlined">add</span>
-            </div>
-            <span className={styles.addText}>Start New Project</span>
-          </button>
-        </div>
-      </div>
+            {/* Projects Grid */}
+            {filteredProjects.length === 0 ? (
+              <NoProjects />
+            ) : (
+              <MyProjects filteredProjects={filteredProjects} handleDeleteProject={handleDeleteProject} />
+            )}
+          </div>
+        </>
+      )}
     </main>
   );
 };

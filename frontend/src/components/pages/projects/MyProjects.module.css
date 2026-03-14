@@ -1,0 +1,150 @@
+.projectsGrid {
+  display: grid;
+  grid-template-columns: repeat(1, 1fr);
+  gap: 1.5rem;
+}
+
+@media (min-width: 768px) {
+  .projectsGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1280px) {
+  .projectsGrid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.projectCard {
+  background-color: var(--card-color);
+  border: 1px solid var(--border-color);
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.projectIcon {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 0.5rem;
+  background-color: var(--four-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--primary-color);
+}
+
+.cardActions {
+  display: flex;
+  gap: 0.25rem;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.projectCard:hover .cardActions {
+  opacity: 1;
+}
+
+.actionButton {
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: var(--font-color-text);
+  cursor: pointer;
+  border-radius: 0.25rem;
+  transition: all 0.2s;
+}
+
+.actionButton:hover {
+  background-color: var(--altern-color);
+  color: var(--font-color-title);
+}
+
+.cardBody {
+  flex: 1;
+}
+
+.projectTitle {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--font-color-title);
+  margin-bottom: 0.25rem;
+}
+
+.cardFooter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: auto;
+}
+
+.dueDate {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.75rem;
+  color: var(--font-color-text);
+}
+
+.dueDate span {
+  font-size: 0.875rem;
+}
+
+.addProjectCard {
+  border: 2px dashed var(--border-color);
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.2s;
+  min-height: 280px;
+}
+
+.addProjectCard:hover {
+  background-color: var(--altern-color);
+  border-color: var(--four-color);
+}
+
+.addIcon {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
+  border: 2px dashed var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 0.2s;
+}
+
+.addProjectCard:hover .addIcon {
+  border-color: var(--four-color);
+}
+
+.addText {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--font-color-text);
+  transition: color 0.2s;
+}
+
+.addProjectCard:hover .addText {
+  color: var(--font-color-title);
+}
