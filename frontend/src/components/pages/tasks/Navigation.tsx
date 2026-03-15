@@ -6,7 +6,7 @@ interface Navigation {
   totalTodo: number
   totalInProgress: number
   totalDone: number
-  activeTab: "all" | "todo" | "in_progress" | "done"
+  activeTab: TaskStatus | "all"
   setActiveTab: (activeTab: TaskStatus | "all") => void
 }
 

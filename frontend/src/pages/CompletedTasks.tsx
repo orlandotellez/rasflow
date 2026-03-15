@@ -1,44 +1,54 @@
-import { Bell, Plus, Search } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Bell, Search, CheckCircle } from 'lucide-react';
+import { useCompletedTasksStore } from '@/store/completedTasksStore';
+import { useAuthStore } from '@/store/authStore';
+import { useTasksStore } from '@/store/taskStore';
 import styles from './CompletedTasks.module.css';
+import { PleaseLogIn } from '@/components/common/PleaseLogIn';
+import { Loading } from '@/components/common/Loading';
+import { Navigation } from '@/components/pages/completedTasks/Navigation';
+import { CardCompleteTask } from '@/components/pages/completedTasks/CardCompleteTask';
 
 const CompletedTasks = () => {
-  const tasks = [
-    {
-      id: 1,
-      title: 'Update Marketing Strategy',
-      date: 'Oct 24, 2023',
-      category: 'Marketing Team',
-      status: 'verified'
-    },
-    {
-      id: 2,
-      title: 'Q3 Financial Report',
-      date: 'Oct 22, 2023',
-      category: 'Finance',
-      status: 'verified'
-    },
-    {
-      id: 3,
-      title: 'Design System Audit',
-      date: 'Oct 18, 2023',
-      category: 'Design',
-      status: 'pending'
-    },
-    {
-      id: 4,
-      title: 'API Documentation Review',
-      date: 'Oct 15, 2023',
-      category: 'Engineering',
-      status: 'verified'
-    },
-    {
-      id: 5,
-      title: 'Client Presentation Prep',
-      date: 'Oct 14, 2023',
-      category: 'Operations',
-      status: 'verified'
+  const { tasks, isLoading, fetchCompletedTasks } = useCompletedTasksStore();
+  const { isAuthenticated } = useAuthStore();
+  const { deleteTask } = useTasksStore();
+
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filter, setFilter] = useState<'all' | 'recent'>('all');
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchCompletedTasks();
     }
-  ];
+  }, [isAuthenticated, fetchCompletedTasks]);
+
+  // Filtrar tareas
+  const filteredTasks = tasks.filter(task => {
+    const matchesSearch = task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (task.project_name || '').toLowerCase().includes(searchTerm.toLowerCase());
+
+    if (filter === 'recent') {
+      // Últimas 24 horas
+      const dayAgo = new Date();
+      dayAgo.setDate(dayAgo.getDate() - 1);
+      return matchesSearch && new Date(task.created_at) > dayAgo;
+    }
+
+    return matchesSearch;
+  });
+
+  const handleDeleteTask = async (taskId: string) => {
+    if (window.confirm('Are you sure you want to delete this task?')) {
+      await deleteTask(taskId);
+      fetchCompletedTasks(); // Recargar
+    }
+  };
+
+  // Si no está autenticado
+  if (!isAuthenticated) {
+    return <PleaseLogIn page="Completed tasks" message="Please log in to view your completed tasks" />
+  }
 
   return (
     <main className={styles.main}>
@@ -58,68 +68,40 @@ const CompletedTasks = () => {
             <input
               type="text"
               placeholder="Search tasks..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
               className={styles.searchInput}
             />
           </div>
-          <button className={styles.newProjectBtn}>
-            <Plus />
-            New Project
-          </button>
         </div>
 
       </header>
 
+      {/* Loading */}
+      {isLoading && <Loading text="Loading tasks..." />}
+
       {/* Tabs */}
-      <div className={styles.tabs}>
-        <button className={`${styles.tab} ${styles.tabActive}`}>
-          All Done (24)
-        </button>
-        <button className={styles.tab}>
-          Recently Verified
-        </button>
-        <button className={styles.tab}>
-          Archived
-        </button>
-      </div>
+      {!isLoading &&
+        <Navigation
+          tasks={tasks}
+          filter={filter}
+          setFilter={setFilter}
+        />}
 
       {/* Task List */}
-      <div className={styles.taskList}>
-        {tasks.map((task) => (
-          <div key={task.id} className={styles.taskItem}>
-            <div className={styles.taskLeft}>
-              <div className={styles.checkbox}>
-                <input type="checkbox" checked disabled />
-              </div>
-              <div className={styles.taskInfo}>
-                <span className={styles.taskTitle}>{task.title}</span>
-                <div className={styles.taskMeta}>
-                  <span>Completed on {task.date}</span>
-                  <span className={styles.dot}></span>
-                  <span>{task.category}</span>
-                </div>
-              </div>
+      {!isLoading && (
+        <div className={styles.taskList}>
+          {filteredTasks.length === 0 ? (
+            <div className={styles.emptyState}>
+              <CheckCircle size={48} className={styles.emptyIcon} />
+              <p>No completed tasks yet</p>
+              <span>Complete some tasks to see them here! 🎯</span>
             </div>
-            <div className={styles.taskRight}>
-              <div className={`${styles.statusBadge} ${task.status === 'verified' ? styles.verified : styles.pending}`}>
-                <span className={`material-symbols-outlined ${task.status === 'verified' ? styles.iconActive : ''}`}>
-                  {task.status === 'verified' ? 'verified' : 'pending'}
-                </span>
-                <span>
-                  {task.status === 'verified' ? 'Verified' : 'Pending Verification'}
-                </span>
-              </div>
-              <button className={styles.moreButton}>
-                <span className="material-symbols-outlined">more_vert</span>
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Load More */}
-      <div className={styles.loadMore}>
-        <button className={styles.loadMoreBtn}>Load Older Tasks</button>
-      </div>
+          ) : (
+            filteredTasks.map((task) => <CardCompleteTask task={task} handleDeleteTask={handleDeleteTask} />)
+          )}
+        </div>
+      )}
     </main>
   );
 };
