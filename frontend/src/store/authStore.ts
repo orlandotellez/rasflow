@@ -1,7 +1,22 @@
 import { create } from 'zustand';
 import type { User } from '@/types/user';
-import { authMe, checkAuth, loginUser, logout, registerUser } from '@/api/auth';
+import { authMe, checkAuth, loginUser, logout as apiLogout, registerUser } from '@/api/auth';
 import type { LoginRequest, RegisterRequest } from '@/types/auth';
+
+// Keys de los stores persistidos
+const STORAGE_KEYS = [
+  'projects-storage',
+  'tasks-storage',
+  'completed-tasks-storage',
+  'dashboard-storage',
+];
+
+// Función para limpiar todos los stores persistidos
+const clearAllStoredData = () => {
+  STORAGE_KEYS.forEach(key => {
+    localStorage.removeItem(key);
+  });
+};
 
 interface AuthState {
   user: User | null;
@@ -90,8 +105,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   logout: async () => {
     try {
-      await logout();
+      await apiLogout();
     } finally {
+      // Limpiar localStorage de todos los stores
+      clearAllStoredData();
       set({ user: null, isAuthenticated: false, error: null });
     }
   },
