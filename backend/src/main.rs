@@ -11,12 +11,13 @@ mod states;
 
 use axum::{Router, http};
 use dotenvy::dotenv;
+use redis::Client;
 use states::AppState;
 use tokio::net::TcpListener;
 use tower_http::cors::CorsLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
-use crate::config::constants::FRONTEND_URL;
+use crate::config::constants::{FRONTEND_URL, REDIS_URL};
 
 const PORT: u16 = 3000;
 const HOST: &str = "0.0.0.0";
@@ -52,13 +53,16 @@ async fn main() {
 
     tracing::info!("Database connected");
 
-    let redis = cache::redis::get_redis_client()
+    let redis_client: Client = redis::Client::open(REDIS_URL.as_str()).expect("Invalid Redis URL");
+
+    let redis_conn = redis_client
+        .get_multiplexed_async_connection()
         .await
         .expect("Error connecting to Redis");
 
     tracing::info!("Redis connected");
 
-    let app_state: AppState = AppState::new(db, redis);
+    let app_state: AppState = AppState::new(db, redis_conn);
 
     let router: Router = routes::create_routes().with_state(app_state).layer(cors);
 

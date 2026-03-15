@@ -1,75 +1,61 @@
-use redis::{AsyncCommands, Client};
-
-use crate::{config::constants::REDIS_URL, helpers::errors::AppError};
+use crate::helpers::errors::AppError;
+use redis::{AsyncCommands, aio::MultiplexedConnection};
 use serde::{Serialize, de::DeserializeOwned};
 
-pub async fn get_redis_client() -> Result<Client, AppError> {
-    Client::open(REDIS_URL.as_str())
-        .map_err(|e| AppError::InternalServerError(format!("Error connect redis: {}", e)))
-}
-
-pub async fn get_cache<T: DeserializeOwned>(key: &str) -> Result<Option<T>, AppError> {
-    let client: Client = get_redis_client().await?;
-
-    let mut conn = client
-        .get_multiplexed_async_connection()
-        .await
-        .map_err(|e| AppError::InternalServerError(format!("Error connect redis: {}", e)))?;
-
+/// Obtener datos del caché
+pub async fn get_cache<T: DeserializeOwned>(
+    mut conn: MultiplexedConnection,
+    key: &str,
+) -> Result<Option<T>, AppError> {
     let value: Option<String> = conn
         .get(key)
         .await
-        .map_err(|e| AppError::InternalServerError(format!("Error cache: {}", e)))?;
+        .map_err(|e| AppError::InternalServerError(format!("Redis GET error: {}", e)))?;
 
     match value {
         Some(v) => {
-            let data: T = serde_json::from_str(&v).map_err(|e| {
-                AppError::InternalServerError(format!("Deserialize errror cache: {}", e))
+            let data = serde_json::from_str(&v).map_err(|e| {
+                AppError::InternalServerError(format!("Deserialization error: {}", e))
             })?;
-
             Ok(Some(data))
         }
         None => Ok(None),
     }
 }
 
+/// Guardar datos en el caché con un tiempo de vida (TTL)
 pub async fn set_cache<T: Serialize>(
+    mut conn: MultiplexedConnection, // Recibimos la conexión del state
     key: &str,
     value: &T,
-    ttl_secconds: u64,
+    ttl_seconds: u64,
 ) -> Result<(), AppError> {
-    let client: Client = get_redis_client().await?;
-    let mut conn = client
-        .get_multiplexed_async_connection()
-        .await
-        .map_err(|e| AppError::InternalServerError(format!("Error connect redis: {}", e)))?;
     let serialized = serde_json::to_string(value)
-        .map_err(|e| AppError::InternalServerError(format!("Error serialized value: {}", e)))?;
+        .map_err(|e| AppError::InternalServerError(format!("Error serializing value: {}", e)))?;
 
-    conn.set_ex::<_, _, ()>(key, serialized, ttl_secconds)
+    let _: () = conn
+        .set_ex(key, serialized, ttl_seconds)
         .await
         .map_err(|e| AppError::InternalServerError(format!("Error saving cache: {}", e)))?;
 
     Ok(())
 }
 
-pub async fn invalidate_cache(pattern: &str) -> Result<(), AppError> {
-    let client: Client = get_redis_client().await?;
-
-    let mut conn = client
-        .get_multiplexed_async_connection()
-        .await
-        .map_err(|e| AppError::InternalServerError(format!("Error connect redis: {}", e)))?;
-
+/// Invalidar caché basado en un patrón (ej: "projects:user:123:*")
+pub async fn invalidate_cache(
+    mut conn: MultiplexedConnection, // Recibimos la conexión del state
+    pattern: &str,
+) -> Result<(), AppError> {
+    // Buscamos las llaves que coinciden con el patrón
     let keys: Vec<String> = conn
         .keys(pattern)
         .await
-        .map_err(|e| AppError::InternalServerError(format!("Error search keys: {}", e)))?;
+        .map_err(|e| AppError::InternalServerError(format!("Error searching keys: {}", e)))?;
 
     if !keys.is_empty() {
-        conn.del::<_, ()>(keys)
-            .await
-            .map_err(|e| AppError::InternalServerError(format!("Error invalid cache: {}", e)))?;
+        let _: () = conn.del(keys).await.map_err(|e| {
+            AppError::InternalServerError(format!("Error invalidating cache: {}", e))
+        })?;
     }
 
     Ok(())

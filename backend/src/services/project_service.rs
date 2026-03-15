@@ -31,7 +31,7 @@ impl ProjectService {
         .await?;
 
         // Invalidar cache de proyectos del usuario
-        let _ = invalidate_cache(&format!("projects:user:{}:*", user_id)).await;
+        let _ = invalidate_cache(db.redis.clone(), &format!("projects:user:{}:*", user_id)).await;
 
         Ok(project)
     }
@@ -48,7 +48,9 @@ impl ProjectService {
         // Intentar obtener del cache primero
         let cache_key: String = format!("projects:user:{}:page:{}:limit:{}", user_id, page, limit);
 
-        if let Some(cached) = get_cache::<PaginatedResponse<Project>>(&cache_key).await? {
+        if let Some(cached) =
+            get_cache::<PaginatedResponse<Project>>(db.redis.clone(), &cache_key).await?
+        {
             tracing::info!("Cache hit for projects");
             return Ok(cached);
         }
@@ -83,7 +85,7 @@ impl ProjectService {
         };
 
         // Guardar en cache por 60 segundos
-        let _ = set_cache(&cache_key, &response, 60).await;
+        let _ = set_cache(db.redis.clone(), &cache_key, &response, 60).await;
 
         Ok(response)
     }
@@ -135,7 +137,7 @@ impl ProjectService {
         .ok_or(AppError::NotFound("Project not found".to_string()))?;
 
         // Invalidar cache
-        let _ = invalidate_cache(&format!("projects:user:{}:*", user_id)).await;
+        let _ = invalidate_cache(db.redis.clone(), &format!("projects:user:{}:*", user_id)).await;
 
         Ok(project)
     }
@@ -159,7 +161,7 @@ impl ProjectService {
         }
 
         // Invalidar cache
-        let _ = invalidate_cache(&format!("projects:user:{}:*", user_id)).await;
+        let _ = invalidate_cache(db.redis.clone(), &format!("projects:user:{}:*", user_id)).await;
 
         Ok(())
     }

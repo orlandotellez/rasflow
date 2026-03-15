@@ -1,7 +1,7 @@
 use axum::{
-    Json,
     http::StatusCode,
     response::{IntoResponse, Response},
+    Json,
 };
 use serde_json::json;
 use validator::ValidationErrors;
@@ -88,5 +88,11 @@ impl From<sqlx::Error> for AppError {
             }
             _ => AppError::InternalServerError(err.to_string()),
         }
+    }
+}
+
+impl From<serde_json::Error> for AppError {
+    fn from(err: serde_json::Error) -> Self {
+        AppError::InternalServerError(format!("JSON error: {}", err))
     }
 }

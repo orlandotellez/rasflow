@@ -8,6 +8,7 @@ use crate::{
     states::AppState,
 };
 use sqlx::Row;
+use uuid::Uuid;
 
 pub struct TaskService;
 
@@ -46,7 +47,7 @@ impl TaskService {
         .fetch_one(&db.db)
         .await?;
 
-        let task = Task {
+        let task: Task = Task {
             id: row.get("id"),
             title: row.get("title"),
             description: row.get("description"),
@@ -57,7 +58,8 @@ impl TaskService {
         };
 
         // Invalidar cache de tareas del proyecto
-        let _ = invalidate_cache(&format!("tasks:project:{}:*", project_id)).await;
+        let _ =
+            invalidate_cache(db.redis.clone(), &format!("tasks:project:{}:*", project_id)).await;
 
         Ok(task)
     }
@@ -90,7 +92,9 @@ impl TaskService {
             status_filter.as_deref().unwrap_or("all")
         );
 
-        if let Some(cached) = get_cache::<PaginatedResponse<Task>>(&cache_key).await? {
+        if let Some(cached) =
+            get_cache::<PaginatedResponse<Task>>(db.redis.clone(), &cache_key).await?
+        {
             tracing::info!("Cache hit for tasks");
             return Ok(cached);
         }
@@ -113,15 +117,17 @@ impl TaskService {
             .fetch_all(&db.db)
             .await?;
 
-            rows.into_iter().map(|row| Task {
-                id: row.get("id"),
-                title: row.get("title"),
-                description: row.get("description"),
-                status: row.get("status"),
-                project_id: row.get("project_id"),
-                assigned_to: row.get("assigned_to"),
-                created_at: row.get("created_at"),
-            }).collect()
+            rows.into_iter()
+                .map(|row| Task {
+                    id: row.get("id"),
+                    title: row.get("title"),
+                    description: row.get("description"),
+                    status: row.get("status"),
+                    project_id: row.get("project_id"),
+                    assigned_to: row.get("assigned_to"),
+                    created_at: row.get("created_at"),
+                })
+                .collect()
         } else {
             let rows = sqlx::query(
                 r#"
@@ -136,40 +142,38 @@ impl TaskService {
             .fetch_all(&db.db)
             .await?;
 
-            rows.into_iter().map(|row| Task {
-                id: row.get("id"),
-                title: row.get("title"),
-                description: row.get("description"),
-                status: row.get("status"),
-                project_id: row.get("project_id"),
-                assigned_to: row.get("assigned_to"),
-                created_at: row.get("created_at"),
-            }).collect()
+            rows.into_iter()
+                .map(|row| Task {
+                    id: row.get("id"),
+                    title: row.get("title"),
+                    description: row.get("description"),
+                    status: row.get("status"),
+                    project_id: row.get("project_id"),
+                    assigned_to: row.get("assigned_to"),
+                    created_at: row.get("created_at"),
+                })
+                .collect()
         };
 
         // Obtener total
         let total: i64 = if let Some(ref status) = status_filter {
-            sqlx::query_scalar(
-                "SELECT COUNT(*) FROM tasks WHERE project_id = $1 AND status = $2"
-            )
-            .bind(project_id)
-            .bind(status)
-            .fetch_one(&db.db)
-            .await?
+            sqlx::query_scalar("SELECT COUNT(*) FROM tasks WHERE project_id = $1 AND status = $2")
+                .bind(project_id)
+                .bind(status)
+                .fetch_one(&db.db)
+                .await?
         } else {
-            sqlx::query_scalar(
-                "SELECT COUNT(*) FROM tasks WHERE project_id = $1"
-            )
-            .bind(project_id)
-            .fetch_one(&db.db)
-            .await?
+            sqlx::query_scalar("SELECT COUNT(*) FROM tasks WHERE project_id = $1")
+                .bind(project_id)
+                .fetch_one(&db.db)
+                .await?
         };
 
         let meta = PaginationMeta::new(page, limit, total);
         let response = PaginatedResponse { data: tasks, meta };
 
         // Guardar en cache por 60 segundos
-        let _ = set_cache(&cache_key, &response, 60).await;
+        let _ = set_cache(db.redis.clone(), &cache_key, &response, 60).await;
 
         Ok(response)
     }
@@ -248,7 +252,7 @@ impl TaskService {
         .fetch_one(&db.db)
         .await?;
 
-        let task = Task {
+        let task: Task = Task {
             id: row.get("id"),
             title: row.get("title"),
             description: row.get("description"),
@@ -259,7 +263,11 @@ impl TaskService {
         };
 
         // Invalidar cache
-        let _ = invalidate_cache(&format!("tasks:project:{}:*", task.project_id)).await;
+        let _ = invalidate_cache(
+            db.redis.clone(),
+            &format!("tasks:project:{}:*", task.project_id),
+        )
+        .await;
 
         Ok(task)
     }
@@ -277,14 +285,15 @@ impl TaskService {
                 FROM tasks t
                 INNER JOIN projects p ON t.project_id = p.id
                 WHERE t.id = $1 AND p.owner_id = $2
-            "#
+            "#,
         )
         .bind(task_id)
         .bind(user_id)
         .fetch_optional(&db.db)
         .await?;
 
-        let project_id = project_id.ok_or(AppError::NotFound("Task not found".to_string()))?;
+        let project_id: Uuid =
+            project_id.ok_or(AppError::NotFound("Task not found".to_string()))?;
 
         let result = sqlx::query!("DELETE FROM tasks WHERE id = $1", task_id)
             .execute(&db.db)
@@ -295,7 +304,8 @@ impl TaskService {
         }
 
         // Invalidar cache
-        let _ = invalidate_cache(&format!("tasks:project:{}:*", project_id)).await;
+        let _ =
+            invalidate_cache(db.redis.clone(), &format!("tasks:project:{}:*", project_id)).await;
 
         Ok(())
     }
