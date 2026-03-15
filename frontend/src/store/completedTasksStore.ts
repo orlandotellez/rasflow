@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 import type { Task } from '@/types/task';
 import { listProjects } from '@/api/projects';
 import { listTasks } from '@/api/tasks';
@@ -12,67 +13,91 @@ interface CompletedTasksState {
   tasks: TaskWithProject[];
   isLoading: boolean;
   error: string | null;
+  lastFetched: number | null;
 
   // Actions
-  fetchCompletedTasks: () => Promise<void>;
+  fetchCompletedTasks: (forceRefresh?: boolean) => Promise<void>;
   clearError: () => void;
 }
 
-export const useCompletedTasksStore = create<CompletedTasksState>((set) => ({
-  tasks: [],
-  isLoading: false,
-  error: null,
+// Cache válido por 5 minutos
+const CACHE_TTL = 5 * 60 * 1000;
 
-  fetchCompletedTasks: async () => {
-    set({ isLoading: true, error: null });
+export const useCompletedTasksStore = create<CompletedTasksState>()(
+  persist(
+    (set, get) => ({
+      tasks: [],
+      isLoading: false,
+      error: null,
+      lastFetched: null,
 
-    try {
-      // Obtener todos los proyectos del usuario
-      const projectsResponse = await listProjects(1, 100);
+      fetchCompletedTasks: async (forceRefresh = false) => {
+        const { tasks, lastFetched } = get();
+        const now = Date.now();
 
-      if (!projectsResponse.success) {
-        set({ error: projectsResponse.message, isLoading: false });
-        return;
-      }
+        // Si hay cache válido y no se fuerza refresh, usar cache
+        if (!forceRefresh && tasks.length > 0 && lastFetched && (now - lastFetched) < CACHE_TTL) {
+          return;
+        }
 
-      const projects = projectsResponse.data.data;
+        set({ isLoading: true, error: null });
 
-      // Obtener tareas de cada proyecto (solo done)
-      const allTasks: TaskWithProject[] = [];
-
-      for (const project of projects) {
         try {
-          const tasksResponse = await listTasks(project.id, 1, 50);
+          // Obtener todos los proyectos del usuario
+          const projectsResponse = await listProjects(1, 100);
 
-          if (tasksResponse.success) {
-            // Filtrar solo tareas completadas
-            const completedTasks = tasksResponse.data.data.filter(
-              task => task.status === 'done'
-            );
+          if (!projectsResponse.success) {
+            set({ error: projectsResponse.message, isLoading: false });
+            return;
+          }
 
-            // Agregar nombre del proyecto a cada tarea
-            for (const task of completedTasks) {
-              allTasks.push({
-                ...task,
-                project_name: project.name
-              });
+          const projects = projectsResponse.data.data;
+
+          // Obtener tareas de cada proyecto (solo done)
+          const allTasks: TaskWithProject[] = [];
+
+          for (const project of projects) {
+            try {
+              const tasksResponse = await listTasks(project.id, 1, 50);
+
+              if (tasksResponse.success) {
+                // Filtrar solo tareas completadas
+                const completedTasks = tasksResponse.data.data.filter(
+                  task => task.status === 'done'
+                );
+
+                // Agregar nombre del proyecto a cada tarea
+                for (const task of completedTasks) {
+                  allTasks.push({
+                    ...task,
+                    project_name: project.name
+                  });
+                }
+              }
+            } catch (err) {
+              console.error(`Error fetching tasks for project ${project.id}:`, err);
             }
           }
-        } catch (err) {
-          console.error(`Error fetching tasks for project ${project.id}:`, err);
+
+          // Ordenar por fecha de creación (más recientes primero)
+          allTasks.sort((a, b) =>
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+          );
+
+          set({ tasks: allTasks, isLoading: false, lastFetched: now });
+        } catch {
+          set({ error: 'Failed to fetch completed tasks', isLoading: false });
         }
-      }
+      },
 
-      // Ordenar por fecha de creación (más recientes primero)
-      allTasks.sort((a, b) =>
-        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-      );
-
-      set({ tasks: allTasks, isLoading: false });
-    } catch {
-      set({ error: 'Failed to fetch completed tasks', isLoading: false });
+      clearError: () => set({ error: null }),
+    }),
+    {
+      name: 'completed-tasks-storage',
+      partialize: (state) => ({
+        tasks: state.tasks,
+        lastFetched: state.lastFetched,
+      }),
     }
-  },
-
-  clearError: () => set({ error: null }),
-}));
+  )
+);
