@@ -1,0 +1,85 @@
+.profileSection {
+  background-color: var(--card-color);
+  border-radius: 0.75rem;
+  border: 1px solid var(--border-color);
+  padding: 1.5rem;
+  margin-bottom: 2.5rem;
+}
+
+.profileInfo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+@media (min-width: 640px) {
+  .profileInfo {
+    flex-direction: row;
+    align-items: flex-start;
+  }
+}
+
+.avatarWrapper {
+  position: relative;
+}
+
+.avatar {
+  width: 6rem;
+  height: 6rem;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--secondary-color), var(--altern-secondary-color));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 2rem;
+  font-weight: 700;
+  border: 2px solid var(--altern-color);
+}
+
+.profileDetails {
+  text-align: center;
+}
+
+@media (min-width: 640px) {
+  .profileDetails {
+    text-align: left;
+  }
+}
+
+.profileName {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--font-color-title);
+}
+
+.profileEmail {
+  color: var(--font-color-text);
+  margin-top: 0.25rem;
+}
+
+.badges {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  justify-content: center;
+}
+
+@media (min-width: 640px) {
+  .badges {
+    justify-content: flex-start;
+  }
+}
+
+.badge {
+  font-size: 0.625rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.125rem 0.5rem;
+  border-radius: 0.25rem;
+  background-color: var(--altern-color);
+  color: var(--font-color-text);
+  border: 1px solid var(--border-color);
+}
